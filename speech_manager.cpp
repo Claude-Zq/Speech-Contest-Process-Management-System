@@ -9,6 +9,9 @@ speech_manager::speech_manager() {
 	
 	/*创建选手*/
 	create_speaker();
+
+	/*加载往届记录*/
+	load_record();
 }
 
 void speech_manager::show_menu() {
@@ -40,6 +43,9 @@ void speech_manager::init_speech() {
 	ITS.clear();
 	/*比赛轮数*/
 	m_index = 1;
+
+	/*初始化记录容器*/
+	m_record.clear();
 }
 
 void speech_manager::create_speaker() {
@@ -88,10 +94,20 @@ void speech_manager::start_speech() {
 	//3.显示最终结果
 	show_score();
 
-	system("pause");
-	system("cls"); /*按任意键后清屏*/
-
 	//4.保存分数
+	save_record();
+
+	//重置比赛
+	//初始化属性
+	init_speech();
+	//创建选手
+	create_speaker();
+	//获取往届比赛记录
+	load_record();
+	
+	std::cout << "本届比赛完毕！" << std::endl;
+	system("pause");
+	system("cls");
 }
 
 void speech_manager::speech_draw(){
@@ -176,6 +192,8 @@ void speech_manager::speech_contest() {
 			STI.clear();/*清空临时容器*/
 		}
 
+		delay();/*延时一秒*/
+
 	}
 	
 	std::cout << "----------第" << m_index << "轮比赛完毕----------" << std::endl;
@@ -198,6 +216,124 @@ void speech_manager::show_score() {
 	std::cout << std::endl;
 }
 
+void speech_manager::save_record() {
+	std::ofstream ofs;
+	ofs.open("speech.csv", std::ios::out | std::ios::app);//写文件()追加
+
+	for (auto it = v3.begin(); it != v3.end(); it++)
+		ofs << *it << "," << ITS[*it].m_score[m_index-1] << ",";
+
+	ofs << std::endl;
+
+	//关闭文件
+	ofs.close();
+
+}
+
+void speech_manager::load_record() {
+	
+	std::ifstream ifs("speech.csv", std::ios::in);//输入流对象 读取文件
+
+	if (!ifs.is_open()) {
+		file_is_empty = true;
+		ifs.close();
+		return;
+	}
+
+	char ch;
+	ifs >> ch;
+	if (ifs.eof()) {
+		file_is_empty = true;
+		ifs.close();
+		return;
+	}
+	//文件不为空
+	file_is_empty = false;
+	ifs.putback(ch);//读取的单个字符放回去
+
+	
+
+	std::string data;
+	int index = 0;
+	while (ifs >> data) {
+		std::vector<std::string> v;//存放六个string字符串
+		int pos = -1, start = 0;
+		while (true) {
+			pos = data.find(',', start);
+			if (pos == -1) break;
+			std::string temp = data.substr(start, pos - start);
+			start = pos + 1;
+			v.push_back(temp);
+		}
+		m_record.insert(std::make_pair(++index, v));
+	}
+	ifs.close();
+}
+
+void speech_manager::show_record() {
+	
+	if (file_is_empty) {
+		std::cout << "记录为空" << std::endl;
+	}
+	else {
+		for (auto it = m_record.begin(); it != m_record.end(); it++) {
+			std::cout << "第" << it->first << "届"
+				<< "\t冠军编号: " << it->second[0] << "\t得分: " << it->second[1]
+				<< "\t亚军编号:" << it->second[2] << "\t得分: " << it->second[3]
+				<< "\t季军编号:" << it->second[4] << "\t得分: " << it->second[5] << std::endl;
+		}
+	}
+	system("pause");
+	system("cls");
+}
+
+void speech_manager::clear_record(){
+
+	std::cout << "确认清空?" << std::endl
+		<< "1.确认" << std::endl
+		<< "2.取消" << std::endl;
+	std::cout << "请输入您的选择：" << std::endl;
+	int select = 0;
+
+	/*输入合法性检查*/
+	while (!(std::cin >> select)) {
+		std::cout << "输入有误,请重新输入" << std::endl;
+		std::cin.clear();/*清空输入缓冲区*/
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		std::cout << "请输入您的选择：" << std::endl;
+	}
+
+	if (select == 1) {
+		//清空文件
+		std::ofstream ofs("speech.csv", std::ios::trunc);
+		ofs.close();
+
+		//初始化属性
+		init_speech();
+
+		//创建选手
+		create_speaker();
+
+		//获取往届记录
+		load_record();
+
+		std::cout << "清空成功" << std::endl;
+	}
+	else if (select == 2) std::cout << "取消成功" << std::endl;
+	else std::cout << "无该选项,默认取消" << std::endl;
+	
+	system("pause");
+	system("cls");
+}
+
 speech_manager::~speech_manager() {
 
+}
+
+void speech_manager::delay(){
+
+	clock_t delay = 1 * CLOCKS_PER_SEC;
+	clock_t start = clock();
+	while (clock() - start < delay);        // 直到计时结束
+	return;
 }

@@ -1,9 +1,13 @@
 #include<iostream>
 #include"speech_manager.h"
+#include<ctime>
 
 
 
 int main() {
+
+	//随机数种子
+	srand((unsigned int)time(NULL));
 
 	speech_manager sm;
 
@@ -24,8 +28,10 @@ int main() {
 			sm.start_speech();
 			break;
 		case 2://查看记录
+			sm.show_record();
 			break;
 		case 3://清空记录
+			sm.clear_record();
 			break;
 		case 0://退出系统
 			sm.exit_system();
